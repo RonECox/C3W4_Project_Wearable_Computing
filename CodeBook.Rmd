@@ -1,0 +1,410 @@
+---
+title: "Code Book: Getting and Cleaning Data Course Project"
+author: "Ron Cox"
+date: "8/13/2021"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+# Introduction
+
+This code book describes the variables, the data, and any transformations or work that I performed to clean up the data related to the project in order to develop an R script called _run_analysis.R_ that meets the following requirements. 
+
+R1: Merges the training and the test sets to create one data set. <span style="color: red;">See Step E: Merge Train/Test Sets</span>
+
+R2: Extracts only the measurements on the mean and standard deviation for each measurement. <span style="color: red;">See Step C: Build Train/Test Data Sets</span>
+
+R3: Uses descriptive activity names to name the activities in the data set. <span style="color: red;">See Step D: Append Activity Labels</span>
+
+R4: Appropriately labels the data set with descriptive variable names. <span style="color: red;">See Step C: Build Train/Test Data Sets</span> 
+
+R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject. <span style="color: red;">See Step F: Average Variables by Activity and Subject</span>
+
+# Step-By-Step Procedure
+
+## Step A: Download compressed data set, retrieve select files, and load them into the environment
+
+This step is the prerequisite of the project. The zipfile is downloaded to a temporary file and the folder structure is stored in the __zipFiles__ variable. After identifying the specific files required for the project, those files were read directly from the compressed temporary file into the following data frames using the indexes in the __zipFiles__ variable:
+
+Object Names | File Names| Full Path (in zip file)
+:------------- |:--------- |:------------------------
+activityLabels | activity_labels.txt    | [1] "UCI HAR Dataset/activity_labels.txt"
+features | features.txt | [2] "UCI HAR Dataset/features.txt"
+testSubjects | subject_test.txt | [16] "UCI HAR Dataset/test/subject_test.txt"
+testSet	| X_test.txt | [17] "UCI HAR Dataset/test/X_test.txt"
+activityLabels_test | y_test.txt | [18] "UCI HAR Dataset/test/y_test.txt"
+trainSubjects | subject_train.txt | [30] "UCI HAR Dataset/train/subject_train.txt"
+trainSet | X_train.txt | [31] "UCI HAR Dataset/train/X_train.txt"
+activityLabels_train | y_train.txt | [32] "UCI HAR Dataset/train/y_train.txt"
+
+```{r, include=FALSE, label = "Load Libraries"}
+# Load necessary libraries
+library(dplyr)
+```
+
+```{r, label = "Step A"}
+# Create a temporary file to store the downloaded zip file
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+temp <- tempfile()
+download.file(fileUrl, temp)
+
+# Get a list of the files in the zip file
+zipFiles <- unzip(zipfile = temp, list = TRUE)
+
+## The following files will be loaded into the project using the corresponding index
+## of zipFiles:
+##              1 = activity_labels.txt
+##              2 = features.txt
+##              16 = subject_test.txt
+##              17 = X_test.txt
+##              18 = y_test.txt
+##              30 = subject_train.txt
+##              31 = X_train.txt
+##              32 = y_train.txt
+
+
+# Read in activity_labels.txt
+activityLabels <- read.csv(unz(temp, zipFiles$Name[1]), 
+                           header = FALSE, sep = "", 
+                           col.names = c("ActivityCode", "Activity"))
+# Read in features.txt
+features <- read.csv(unz(temp, zipFiles$Name[2]),
+                     header = FALSE, sep = "", 
+                     col.names = c("FeatureCode", "Feature"))
+
+# Read each of the three data sets related to testing: subject_test.txt, X_test.txt,
+# and y_test.txt
+testSubjects <- read.csv(unz(temp, zipFiles$Name[16]), 
+                         header = FALSE, col.names = "Subjects")
+
+testSet <- read.csv(unz(temp, zipFiles$Name[17]), 
+                    header = FALSE, sep = "") #Use "features" for column names
+
+activityLabels_test <- read.csv(unz(temp, zipFiles$Name[18]), 
+                                header = FALSE, col.names = "Activity")
+
+# Read each of the three data sets related to training: subject_train.txt, X_train.txt,
+# and y_train.txt
+trainSubjects <- read.csv(unz(temp, zipFiles$Name[30]),
+                          header = FALSE, col.names = "Subjects")
+
+trainSet <- read.csv(unz(temp, zipFiles$Name[31]),
+                     header = FALSE, sep = "") #Use "features" for column names
+
+activityLabels_train <- read.csv(unz(temp, zipFiles$Name[32]),
+                                 header = FALSE, col.names = "Activity")
+
+# Close the connection to the temporary file
+unlink(temp)
+```
+
+## Step B: Data Exploration
+
+I reviewed each data frame to gain a better understanding of the data sets and to determine how the original files were related to each other.
+
+### activityLabels
+```{r, label = "Step B: activityLabels"}
+# Get class
+class(activityLabels)
+
+# Get dimension
+dim(activityLabels)
+
+# Get structure
+str(activityLabels)
+
+# Display values
+activityLabels
+```
+
+### features
+```{r, label = "Step B: features"}
+# Get class
+class(features)
+
+# Get dimension
+dim(features)
+
+# Get structure
+str(features)
+
+# Display values
+head(features)
+```
+
+### testSubjects
+```{r, label = "Step B: testSubjects"}
+# Get class
+class(testSubjects)
+
+# Get dimension
+dim(testSubjects)
+
+# Get structure
+str(testSubjects)
+
+# Display values
+head(testSubjects)
+```
+
+### testSet
+```{r, label = "Step B: testSet"}
+# Get class
+class(testSet)
+
+# Get dimension
+dim(testSet)
+
+# Get structure (limited to first 10 for brevity)
+str(testSet, list.len = 10)
+
+# Display values (limited to a 5 row, 5 column set for brevity)
+testSet[1:5,1:5]
+```
+
+### activityLabels_test
+```{r, label = "Step B: activityLabels_test"}
+# Get class
+class(activityLabels_test)
+
+# Get dimension
+dim(activityLabels_test)
+
+# Get structure
+str(activityLabels_test)
+
+# Display values
+head(activityLabels_test)
+```
+
+### trainSubjects
+```{r, label = "Step B: trainSubjects"}
+# Get class
+class(trainSubjects)
+
+# Get dimension
+dim(trainSubjects)
+
+# Get structure
+str(trainSubjects)
+
+# Display values
+head(trainSubjects)
+```
+
+### trainSet
+```{r, label = "Step B: trainSet"}
+# Get class
+class(trainSet)
+
+# Get dimension
+dim(trainSet)
+
+# Get structure (limited to first 10 for brevity)
+str(trainSet, list.len = 10)
+
+# Display values (limited to a 5 row, 5 column set for brevity)
+trainSet[1:5,1:5]
+```
+
+### activityLabels_train
+```{r, label = "Step B: activityLabels_train"}
+# Get class
+class(activityLabels_train)
+
+# Get dimension
+dim(activityLabels_train)
+
+# Get structure
+str(activityLabels_train)
+
+# Display values
+head(activityLabels_train)
+```
+
+## Step C: Build Train/Test Data Sets
+
+NOTE: Because the steps were exactly the same for both the train and test data sets, I performed the sequences together rather than assembling one set and then another.
+
+<span style="color: red;">This step meets R2: Extracts only the measurements on the mean and standard deviation for each measurement.</span>
+
+<span style="color: red;">This step meets R4: Appropriately labels the data set with descriptive variable names.</span>
+```{r, label = "Step C: Build Train/Test Data Sets"}
+# Use the values from the features data set to establish column names for testSet and trainSet
+names(testSet) <- features$Feature
+names(trainSet) <- features$Feature
+
+# Identify all values in features data set that contains the string 'mean' or 'std'
+targetedFeatures <- features %>% filter(grepl("mean|std", Feature))
+
+# Filter out all columns in testSet and trainSet where the variable name does not include
+# the string 'mean' or 'std'
+testSet <- testSet[,targetedFeatures$FeatureCode]
+trainSet <- trainSet[,targetedFeatures$FeatureCode]
+```
+
+### trainSet
+```{r, label = "Step C: trainSet"}
+# Get class
+class(trainSet)
+
+# Get dimension
+dim(trainSet)
+
+# Get structure (limited to first 10 for brevity)
+str(trainSet, list.len = 10)
+
+# Display values (limited to a 5 row, 5 column set for brevity)
+trainSet[1:5,1:5]
+```
+
+### testSet
+```{r, label = "Step C: testSet"}
+# Get class
+class(testSet)
+
+# Get dimension
+dim(testSet)
+
+# Get structure (limited to first 10 for brevity)
+str(testSet, list.len = 10)
+
+# Display values (limited to a 5 row, 5 column set for brevity)
+testSet[1:5,1:5]
+```
+
+## Step D: Append Activity Labels
+<span style="color: red;">This step meets R3: Uses descriptive activity names to name the activities in the data set.</span>
+```{r, label = "Step D: Append Activity Labels"}
+# Add activity labels to the test and train data sets
+testActivities <- merge(activityLabels, activityLabels_test, by.x = "ActivityCode", 
+                        by.y = "Activity", all.y = TRUE)
+trainActivities <- merge(activityLabels, activityLabels_train, by.x = "ActivityCode", 
+                        by.y = "Activity", all.y = TRUE)
+
+# Add new variable, dataType, to test and train data sets
+testActivities <- mutate(testActivities, DataType = "Test")
+trainActivities <- mutate(trainActivities, DataType = "Train")
+```
+
+### trainActivities
+```{r, label = "Step D: trainActivities"}
+# Get class
+class(trainActivities)
+
+# Get dimension
+dim(trainActivities)
+
+# Get structure
+str(trainActivities)
+
+# Display values
+head(trainActivities)
+```
+
+### testActivities
+```{r, label = "Step D: testActivities"}
+# Get class
+class(testActivities)
+
+# Get dimension
+dim(testActivities)
+
+# Get structure
+str(testActivities)
+
+# Display values
+head(testActivities)
+```
+
+## Step E: Merge Train/Test Sets
+<span style="color: red;">This step meets R1: Merges the training and the test sets to create one data set.</span>
+```{r, label = "Step E: Merge Train/Test Sets"}
+# Combine the training related data sets into a unified data frame
+trainingData <- cbind(trainSubjects, trainActivities, trainSet)
+
+# Combine the test related data sets into a unified data frame
+testData <- cbind(testSubjects, testActivities, testSet)
+
+# Combine the training and test data sets into a single data frame
+combinedData <- rbind(trainingData, testData)
+
+# Remove the ActivityCode variable
+combinedData <- select(combinedData, -ActivityCode)
+```
+
+### trainingData
+```{r, label = "Step E: trainingData"}
+# Get class
+class(trainingData)
+
+# Get dimension
+dim(trainingData)
+
+# Get structure (limited to first 10 for brevity)
+str(trainingData, list.len = 10)
+
+# Display values (limited to a 5 row, 6 column set for brevity)
+trainingData[1:5,1:6]
+```
+
+### testData
+```{r, label = "Step E: testData"}
+# Get class
+class(testData)
+
+# Get dimension
+dim(testData)
+
+# Get structure (limited to first 10 for brevity)
+str(testData, list.len = 10)
+
+# Display values (limited to a 5 row, 6 column set for brevity)
+testData[1:5,1:6]
+```
+
+### combinedData
+```{r, label = "Step E: combinedData"}
+# Get class
+class(combinedData)
+
+# Get dimension
+dim(combinedData)
+
+# Get structure (limited to first 10 for brevity)
+str(combinedData, list.len = 10)
+
+# Display values (limited to a 5 row, 7 column set for brevity)
+combinedData[1:5,1:7]
+```
+
+## Step F: Average Variables by Activity and Subject
+<span style="color: red;">This step meets R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.</span>
+```{r, label = "Step F: Average Variables"}
+# Calculate the mean of all measurement rows by subject and activity
+tidyData <- combinedData %>%
+        select(-DataType) %>%
+        group_by(Subjects,Activity) %>% 
+        summarise(
+                across(.cols = everything(), mean, .names = "mean_{.col}"),
+                .groups = "keep")
+
+# Write out tidyData data set to TidyData.csv in working directory
+write.table(tidyData, file = "./TidyData_v1.csv", sep = ",", row.names = FALSE)
+```
+
+### tidyData
+```{r, label = "Step F: tidyData"}
+# Get class
+class(tidyData)
+
+# Get dimension
+dim(tidyData)
+
+# Get structure
+str(tidyData)
+
+# Display values
+head(tidyData)
+```
