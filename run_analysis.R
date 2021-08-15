@@ -15,7 +15,6 @@
 
 # Load necessary libraries
 library(dplyr)
-library(dataMaid)
 
 # Create a temporary file to store the downloaded zip file
 fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
@@ -113,7 +112,7 @@ tidyData <- combinedData %>%
                 across(.cols = everything(), mean, .names = "mean_{.col}"),
                 .groups = "keep")
 
-# Write out tidyData data set to TidyData.csv
-write.table(tidyData, file = "./TidyData_v1.csv", sep = ",", row.names = FALSE)
+# Write out tidyData data set to TidyData.txt
+write.table(tidyData, file = "./TidyData.txt", sep = ",", row.names = FALSE)
 
 print(tidyData)

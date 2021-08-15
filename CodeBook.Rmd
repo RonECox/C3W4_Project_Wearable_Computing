@@ -397,8 +397,8 @@ tidyData <- combinedData %>%
                 across(.cols = everything(), mean, .names = "mean_{.col}"),
                 .groups = "keep")
 
-# Write out tidyData data set to TidyData.csv in working directory
-write.table(tidyData, file = "./TidyData_v1.csv", sep = ",", row.names = FALSE)
+# Write out tidyData data set to TidyData.txt in working directory
+write.table(tidyData, file = "./TidyData.txt", sep = ",", row.names = FALSE)
 ```
 
 ### tidyData
