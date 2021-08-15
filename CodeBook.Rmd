@@ -3,23 +3,27 @@ title: "Code Book: Getting and Cleaning Data Course Project"
 author: "Ron Cox"
 date: "8/13/2021"
 output:
-  html_document: default
-  word_document: default
   pdf_document: default
+  word_document: default
+  html_document: default
 ---
 # Introduction
 
 This code book describes the variables, the data, and any transformations or work that I performed to clean up the data related to the project in order to develop an R script called _run_analysis.R_ that meets the following requirements. 
 
-R1: Merges the training and the test sets to create one data set. <span style="color: red;">See Step E: Merge Train/Test Sets</span>
+R1: Merges the training and the test sets to create one data set.
+_See Step E: Merge Train/Test Sets_
 
-R2: Extracts only the measurements on the mean and standard deviation for each measurement. <span style="color: red;">See Step C: Build Train/Test Data Sets</span>
+R2: Extracts only the measurements on the mean and standard deviation for each measurement. _See Step C: Build Train/Test Data Sets_
 
-R3: Uses descriptive activity names to name the activities in the data set. <span style="color: red;">See Step D: Append Activity Labels</span>
+R3: Uses descriptive activity names to name the activities in the data set.
+_See Step D: Append Activity Labels_
 
-R4: Appropriately labels the data set with descriptive variable names. <span style="color: red;">See Step C: Build Train/Test Data Sets</span> 
+R4: Appropriately labels the data set with descriptive variable names.
+_See Step C: Build Train/Test Data Sets_ 
 
-R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject. <span style="color: red;">See Step F: Average Variables by Activity and Subject</span>
+R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+_See Step F: Average Variables by Activity and Subject_
 
 # Step-By-Step Procedure
 
@@ -227,9 +231,9 @@ head(activityLabels_train)
 
 NOTE: Because the steps were exactly the same for both the train and test data sets, I performed the sequences together rather than assembling one set and then another.
 
-<span style="color: red;">This step meets R2: Extracts only the measurements on the mean and standard deviation for each measurement.</span>
+_This step meets R2: Extracts only the measurements on the mean and standard deviation for each measurement_
 
-<span style="color: red;">This step meets R4: Appropriately labels the data set with descriptive variable names.</span>
+_This step meets R4: Appropriately labels the data set with descriptive variable names_
 ```{r, label = "Step C: Build Train/Test Data Sets"}
 # Use the values from the features data set to establish column names for testSet and trainSet
 names(testSet) <- features$Feature
@@ -275,7 +279,8 @@ testSet[1:5,1:5]
 ```
 
 ## Step D: Append Activity Labels
-<span style="color: red;">This step meets R3: Uses descriptive activity names to name the activities in the data set.</span>
+
+_This step meets R3: Uses descriptive activity names to name the activities in the data set_
 ```{r, label = "Step D: Append Activity Labels"}
 # Add activity labels to the test and train data sets
 testActivities <- merge(activityLabels, activityLabels_test, by.x = "ActivityCode", 
@@ -319,7 +324,8 @@ head(testActivities)
 ```
 
 ## Step E: Merge Train/Test Sets
-<span style="color: red;">This step meets R1: Merges the training and the test sets to create one data set.</span>
+
+_This step meets R1: Merges the training and the test sets to create one data set_
 ```{r, label = "Step E: Merge Train/Test Sets"}
 # Combine the training related data sets into a unified data frame
 trainingData <- cbind(trainSubjects, trainActivities, trainSet)
@@ -380,7 +386,8 @@ combinedData[1:5,1:7]
 ```
 
 ## Step F: Average Variables by Activity and Subject
-<span style="color: red;">This step meets R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.</span>
+
+_This step meets R5: From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject_
 ```{r, label = "Step F: Average Variables"}
 # Calculate the mean of all measurement rows by subject and activity
 tidyData <- combinedData %>%
